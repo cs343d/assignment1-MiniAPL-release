@@ -1,0 +1,4 @@
+assign A = mkArray(1, 4, 1, 2, 3, 4);
+assign B = mkArray(1, 4, 9, -2, 3, 0);
+assign a = sub(A, B);
+a;
