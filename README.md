@@ -54,7 +54,7 @@ For example the following MiniAPL program builds a 1 dimensional, 4 entry array 
 
 The result of running this program is the printout:
 
-    [2][4][6][8]
+    [[2][4][6][8]]
 
 Every value is an array of integers. Each array has a fixed number of dimensions, and each
 dimension is of fixed length.
