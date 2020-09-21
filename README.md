@@ -77,7 +77,7 @@ In addition to evaluation statement printing and assignment statements you will 
 
 ## Grading and Submission
 
-Parsing and type-checking are already done for you. Your job is to implement methods / functions labeled with: `// STUDENTS: FILL IN THIS FUNCTION`. Your implementation should generate code whose behavior matches the examples in [./expected_results/](./expected_results/).
+The only file you should modify is [compiler.cpp](compiler.cpp). Parsing and type-checking are already done for you. Your job is to implement methods / functions labeled with: `// STUDENTS: FILL IN THIS FUNCTION`. Your implementation should generate code whose behavior matches the examples in [./expected_results/](./expected_results/).
 The assignment will be graded as a whole out of 100 points.
 
 ### Extra Credit
