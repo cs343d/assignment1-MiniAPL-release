@@ -68,7 +68,7 @@ To get you started with LLVM we have also implemented infrastructure to JIT LLVM
 
 In addition to evaluation statement printing and assignment statements you will be expected to implement the following functions:
 
-  * `mkArray(# of dimensions, <dimension lengths>)` - Allocate an N dimensional array with the specified dimension lengths. The lengths must be constants.
+  * `mkArray(# of dimensions, <dimension lengths>, <values>)` - Allocate an N dimensional array with the specified dimension lengths. The lengths must be constants.  There should be `# of dimensions` `dimension lengths`, so to construct 2x3x4 array one would write `mkArray(3, 2, 3, 4, ...)`.  Values are specified incrementing the inner most dimension first so `mkArray(2, 2, 3, 0, 1, 2, 3, 4, 5)` would generate `[[[0][1][2]][[3][4][5]]]]`.   
   * `neg(<array>)` - Multiply every element by negative one.
   * `exponent(<array>, power)` - Raise every number in the first argument array to the value in the scalar that is the second argument.
   * `add(<array>, <array>)` - Add two arrays elementwise.
@@ -77,7 +77,7 @@ In addition to evaluation statement printing and assignment statements you will 
 
 ## Grading and Submission
 
-The only file you should modify is [compiler.cpp](compiler.cpp). Parsing and type-checking are already done for you. Your job is to implement methods / functions labeled with: `// STUDENTS: FILL IN THIS FUNCTION`. Your implementation should generate code whose behavior matches the examples in [./expected_results/](./expected_results/).
+The only file you should modify is [compiler.cpp](compiler.cpp). Parsing and type-checking are already done for you. Your job is to implement methods / functions labeled with: `// STUDENTS: FILL IN THIS FUNCTION`. Your implementation should generate code whose behavior matches the examples in [./expected_results/](./expected_results/).****
 The assignment will be graded as a whole out of 100 points.
 
 ### Extra Credit
