@@ -70,7 +70,7 @@ In addition to evaluation statement printing and assignment statements you will 
 
   * `mkArray(# of dimensions, <dimension lengths>, <values>)` - Allocate an N dimensional array with the specified dimension lengths. The lengths must be constants.  There should be `# of dimensions` `dimension lengths`, so to construct 2x3x4 array one would write `mkArray(3, 2, 3, 4, ...)`.  Values are specified incrementing the inner most dimension first so `mkArray(2, 2, 3, 0, 1, 2, 3, 4, 5)` would generate `[[[0][1][2]][[3][4][5]]]]`.   
   * `neg(<array>)` - Multiply every element by negative one.
-  * `exponent(<array>, power)` - Raise every number in the first argument array to the value in the scalar that is the second argument.
+  * `exp(<array>, power)` - Raise every number in the first argument array to the value in the scalar that is the second argument.
   * `add(<array>, <array>)` - Add two arrays elementwise.
   * `sub(<array>, <array>)` - Subtract two arrays elementwise.
   * `reduce(<array>)` - Turn an N dimensional array into an N-1 dimensional array by adding up all numbers in the innermost dimension
