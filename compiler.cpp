@@ -334,6 +334,32 @@ Value *LogErrorV(const char *Str) {
 // ---------------------------------------------------------------------------
 Value *ProgramAST::codegen(Function* F) {
   // STUDENTS: FILL IN THIS FUNCTION
+  int size = 8;
+
+  // make a ptr to Array of size int32s
+  ArrayType* ptr = ArrayType::get(intTy(32), size);
+
+  // allocate memory for the ptr
+  AllocaInst* alloc = Builder.CreateAlloca(ptr);
+
+  // for each location in the array
+  for (int i = 0; i < size; ++i) {
+    // get ptr to i'th element
+    auto element = Builder.CreateGEP(alloc, {intConst(32, 0), intConst(32, i)});
+    // store i to i'th element
+    Builder.CreateStore(intConst(32, i), element);
+  }
+
+  // for each location in the array
+  for (int i = 0; i < size; ++i) {
+    // get ptr to i'th element
+    auto element = Builder.CreateGEP(alloc, {intConst(32, 0), intConst(32, i)});
+    // load the i'th element
+    auto val = Builder.CreateLoad(element);
+    kprintf_val(TheModule.get(), Builder.GetInsertBlock(), val);
+  }
+
+  kprintf_str(TheModule.get(), Builder.GetInsertBlock(), "\nDone\n");
   return nullptr;
 }
 
