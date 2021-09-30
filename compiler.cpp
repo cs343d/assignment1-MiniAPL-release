@@ -334,6 +334,87 @@ Value *LogErrorV(const char *Str) {
 // ---------------------------------------------------------------------------
 Value *ProgramAST::codegen(Function* F) {
   // STUDENTS: FILL IN THIS FUNCTION
+
+  int size = 8;
+
+  // make a ptr to Array of size int32s
+  ArrayType* ptr = ArrayType::get(intTy(32), size);
+
+  // allocate memory for the ptr
+  AllocaInst* alloc = Builder.CreateAlloca(ptr);
+
+
+  { // scope for first loop construction because
+    // I am lazy and want to reuse names
+
+    // get the current block
+    auto head = Builder.GetInsertBlock();
+
+    // create block for loop
+    auto loop = BasicBlock::Create(TheContext, "loop-init", F);
+
+    // create block for post loop
+    auto post = BasicBlock::Create(TheContext, "post-init", F);
+
+    // jump to loop
+    Builder.CreateBr(loop);
+
+    // insert instructions into loop
+    Builder.SetInsertPoint(loop);
+
+    // create a loop index "i"
+    auto i = Builder.CreatePHI(intTy(32), 2, "i");
+
+    // i = 0 if previous block was head
+    i->addIncoming(intConst(32, 0), head);
+
+    // get ptr to i'th element
+    auto element = Builder.CreateGEP(alloc, {intConst(32, 0), i});
+    // *element = i
+    Builder.CreateStore(i, element);
+
+    // increment i
+    auto next_i = Builder.CreateAdd(i, intConst(32, 1));
+
+    // i = next_i if previous block was loop
+    i->addIncoming(next_i, loop);
+
+    // next_i == size
+    auto cond = Builder.CreateICmpEQ(next_i, intConst(32, size));
+
+    // if cond { goto post } else { goto loop }
+    Builder.CreateCondBr(cond, post, loop);
+
+    // insert instructions into post
+    Builder.SetInsertPoint(post);
+  }
+
+  {
+    // head will be post from the previous loop
+    auto head = Builder.GetInsertBlock();
+    auto loop = BasicBlock::Create(TheContext, "loop-print", F);
+    auto post = BasicBlock::Create(TheContext, "post-print", F);
+
+    Builder.CreateBr(loop);
+    Builder.SetInsertPoint(loop);
+
+    auto i = Builder.CreatePHI(intTy(32), 2, "i");
+    i->addIncoming(intConst(32, 0), head);
+
+    auto element = Builder.CreateGEP(alloc, {intConst(32, 0), i});
+    auto val = Builder.CreateLoad(element);
+    kprintf_val(TheModule.get(), Builder.GetInsertBlock(), val);
+
+    auto next_i = Builder.CreateAdd(i, intConst(32, 1));
+    i->addIncoming(next_i, loop);
+
+    auto cond = Builder.CreateICmpEQ(next_i, intConst(32, size));
+
+    Builder.CreateCondBr(cond, post, loop);
+    Builder.SetInsertPoint(post);
+  }
+
+  kprintf_str(TheModule.get(), Builder.GetInsertBlock(), "\nDone\n");
   return nullptr;
 }
 
