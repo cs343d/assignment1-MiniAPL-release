@@ -19,7 +19,7 @@ Some useful LLVM resources:
 
 ### C++ Info
 
-This project uses modern C++, including extensive use of `std::unique_ptr` to manage memory.  If you are not familiar with `std::unique_ptr`, see <https://shaharmike.com/cpp/unique-ptr/>. 
+This project uses modern C++, including extensive use of `std::unique_ptr` to manage memory.  If you are not familiar with `std::unique_ptr`, see <https://shaharmike.com/cpp/unique-ptr/>.
 
 ## Build Instructions
 
@@ -30,6 +30,17 @@ To build the project and run all tests simply type:
     make
 
 At the terminal in the home directory of this project.
+
+Alternatively, you may use docker to handle the dependencies and avoid having to install LLVM on your machine.  To do so, first install [Docker](https://www.docker.com/).
+
+Then, to start an interactive shell in a docker container with the project directory on your host machine already mounted to the container for you, run:
+
+    make docker-shell
+
+And to run the tests, run:
+
+    make docker-test
+
 
 ## Grammar and Types
 
@@ -68,7 +79,7 @@ To get you started with LLVM we have also implemented infrastructure to JIT LLVM
 
 In addition to evaluation statement printing and assignment statements you will be expected to implement the following functions:
 
-  * `mkArray(# of dimensions, <dimension lengths>, <values>)` - Allocate an N dimensional array with the specified dimension lengths. The lengths must be constants.  There should be `# of dimensions` `dimension lengths`, so to construct 2x3x4 array one would write `mkArray(3, 2, 3, 4, ...)`.  Values are specified incrementing the inner most dimension first so `mkArray(2, 2, 3, 0, 1, 2, 3, 4, 5)` would generate `[[[0][1][2]][[3][4][5]]]]`.   
+  * `mkArray(# of dimensions, <dimension lengths>, <values>)` - Allocate an N dimensional array with the specified dimension lengths. The lengths must be constants.  There should be `# of dimensions` `dimension lengths`, so to construct 2x3x4 array one would write `mkArray(3, 2, 3, 4, ...)`.  Values are specified incrementing the inner most dimension first so `mkArray(2, 2, 3, 0, 1, 2, 3, 4, 5)` would generate `[[[0][1][2]][[3][4][5]]]]`.
   * `neg(<array>)` - Multiply every element by negative one.
   * `exp(<array>, power)` - Raise every number in the first argument array to the value in the scalar that is the second argument. `power` shall be greater than or equal to `0`.
   * `add(<array>, <array>)` - Add two arrays elementwise.
@@ -86,9 +97,3 @@ As extra credit implement the following additional functions:
 
   * `expand(<array>, size)` - Turn an N dimensional array into an N+1 dimensional array by duplicating the elements of the last dimension `size` times.
   * `concat(<array>, <array>, dimension)` - Concatenate the two input arrays along the given dimension.
-
-
-
-
-
-
