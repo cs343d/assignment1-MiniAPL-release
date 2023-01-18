@@ -1,15 +1,23 @@
 version: '1'
 services:
+  base:
+    container_name: miniapl-base
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: miniapl
   shell:
-    container_name: miniapl
-    build: .
+    container_name: miniapl-shell
+    image: miniapl
     working_dir: /home/miniAPL
     volumes:
       - .:/home/miniAPL
     command: /bin/bash
   test:
     container_name: miniapl-test
-    build: .
+    image: miniapl
+    depends_on:
+      - base
     working_dir: /home/miniAPL
     volumes:
       - .:/home/miniAPL
