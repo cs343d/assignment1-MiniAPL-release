@@ -1,0 +1,16 @@
+version: '1'
+services:
+  shell:
+    container_name: miniapl
+    build: .
+    working_dir: /home/miniAPL
+    volumes:
+      - .:/home/miniAPL
+    command: /bin/bash
+  test:
+    container_name: miniapl-test
+    build: .
+    working_dir: /home/miniAPL
+    volumes:
+      - .:/home/miniAPL
+    command: /bin/bash -c "make test"
