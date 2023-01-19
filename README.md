@@ -33,6 +33,10 @@ At the terminal in the home directory of this project.
 
 Alternatively, you may use docker to handle the dependencies and avoid having to install LLVM on your machine.  To do so, first install [Docker](https://www.docker.com/).
 
+Then, run the following command to build the docker image:
+
+    docker compose build
+
 Then, to start an interactive shell in a docker container with the project directory on your host machine already mounted to the container for you, run:
 
     make docker-shell
