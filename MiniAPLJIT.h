@@ -30,7 +30,7 @@ public:
     if (!J) {
       return J.takeError();
     }
-    MiniAPLJIT miniJIT(std::move(*J));
+    Expected<MiniAPLJIT> miniJIT(std::move(*J));
     return miniJIT;
   }
 

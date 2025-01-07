@@ -13,12 +13,3 @@ services:
     volumes:
       - .:/home/miniAPL
     command: /bin/bash
-  test:
-    container_name: miniapl-test
-    image: miniapl
-    depends_on:
-      - base
-    working_dir: /home/miniAPL
-    volumes:
-      - .:/home/miniAPL
-    command: /bin/bash -c "make test"
