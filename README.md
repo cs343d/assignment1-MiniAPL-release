@@ -1,11 +1,10 @@
 # MiniAPL
 
-In this assignment you will implement a tiny language
-for dense matrix operations called MiniAPL. MiniAPL scripts consist of expressions that build dense tensors (N-dimensional arrays) and print them to the terminal. MiniAPL script files end with `.mapl`.
+In this assignment you will implement a tiny language for dense matrix operations called MiniAPL. MiniAPL scripts consist of expressions that build dense tensors (N-dimensional arrays) and print them to the terminal. MiniAPL script files end with `.mapl`.
 
 ## Getting LLVM
 
-This project has been tested and developed with LLVM 6.0, you can download it here: [https://releases.llvm.org/download.html#6.0.0](https://releases.llvm.org/download.html#6.0.0).
+This project has been tested and developed with LLVM 19.1.6 (released in December 2024). The latest versions of LLVM (> 15.0.0) will likely work, but this has not been tested.
 
 ### Extra LLVM Info
 
@@ -13,9 +12,11 @@ LLVM is infamous for not being backwards compatible, when learning about it or a
 
 Some useful LLVM resources:
 
-* [LLVM 6.0.0 Documentation Home](https://releases.llvm.org/6.0.0/docs/index.html)
-* [Kaleidoscope Tutorial](https://releases.llvm.org/6.0.0/docs/tutorial/index.html)
+* [LLVM Documentation Home](https://llvm.org/docs/)
+* [LLVM Tutorial](https://llvm.org/docs/tutorial/index.html)
 * [LLVM for Graduate Students](https://www.cs.cornell.edu/~asampson/blog/llvm.html)
+
+The [GetElementPtr (GEP)](https://llvm.org/docs/GetElementPtr.html) instruction will also be important for this assignment!
 
 ### C++ Info
 
@@ -29,7 +30,11 @@ To build the project and run all tests simply type:
 
     make
 
-At the terminal in the home directory of this project.
+At the terminal in the home directory of this project. We've added a simple debug command as well. This will enable AddressSanitizer and verify that your `Module` is properly constructed. For further debugging I suggest using [LLDB](https://lldb.llvm.org/) or good ol' fashion `print` statements. For example, To JIT compile `miniapl_programs/add.mapl` and print the resulting LLVM IR, you can run:
+
+    make mini-apl-debug program=add
+
+### Docker 
 
 Alternatively, you may use docker to handle the dependencies and avoid having to install LLVM on your machine.  To do so, first install [Docker](https://www.docker.com/).
 

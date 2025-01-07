@@ -1,129 +1,51 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_MINIAPLJIT_H
 #define LLVM_EXECUTIONENGINE_ORC_MINIAPLJIT_H
 
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JITSymbol.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
-#include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/ExecutionEngine/Orc/CompileUtils.h"
-#include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
-#include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Mangler.h"
+#include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
+#include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachine.h"
-#include <algorithm>
+#include "llvm/Support/Error.h"
+#include "llvm/Support/TargetSelect.h"
 #include <memory>
-#include <string>
-#include <vector>
-#include <iostream>
-
-using namespace std;
+#include <string_view>
 
 namespace llvm {
 namespace orc {
 
 class MiniAPLJIT {
 public:
-  using ObjLayerT = RTDyldObjectLinkingLayer;
-  using CompileLayerT = IRCompileLayer<ObjLayerT, SimpleCompiler>;
-  using ModuleHandleT = CompileLayerT::ModuleHandleT;
+  MiniAPLJIT(std::unique_ptr<LLJIT> J) : JIT(std::move(J)) {}
 
-  MiniAPLJIT()
-      : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
-        ObjectLayer([]() { return std::make_shared<SectionMemoryManager>(); }),
-        CompileLayer(ObjectLayer, SimpleCompiler(*TM)) {
-    llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
+  // Creates a mini-APL JIT from the LLJIT builder.
+  static Expected<MiniAPLJIT> Create() {
+    // Initialize LLVM's native target and asm printer.
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+
+    // Create LLJIT instance.
+    llvm::Expected<std::unique_ptr<LLJIT>> J = LLJITBuilder().create();
+    if (!J) {
+      return J.takeError();
+    }
+    MiniAPLJIT miniJIT(std::move(*J));
+    return miniJIT;
   }
 
-  TargetMachine &getTargetMachine() { return *TM; }
+  // Returns the LLVM target triple, i.e., <arch>-<vendor>-<sys>-<abi>
+  llvm::Triple getTargetTriple() { return JIT->getTargetTriple(); }
 
-  ModuleHandleT addModule(std::unique_ptr<Module> M) {
-    // We need a memory manager to allocate memory and resolve symbols for this
-    // new module. Create one that resolves symbols by looking back into the
-    // JIT.
-    auto Resolver = createLambdaResolver(
-        [&](const std::string &Name) {
-          if (auto Sym = findMangledSymbol(Name))
-            return Sym;
-          return JITSymbol(nullptr);
-        },
-        [](const std::string &S) { return nullptr; });
-    auto H = cantFail(CompileLayer.addModule(std::move(M),
-                                             std::move(Resolver)));
-
-    ModuleHandles.push_back(H);
-    return H;
+  Error addIRModule(ThreadSafeModule TSM) {
+    return JIT->addIRModule(std::move(TSM));
   }
 
-  void removeModule(ModuleHandleT H) {
-    ModuleHandles.erase(find(ModuleHandles, H));
-    cantFail(CompileLayer.removeModule(H));
-  }
-
-  JITSymbol findSymbol(const std::string Name) {
-    return findMangledSymbol(mangle(Name));
+  // Find a symbol in the JIT.
+  Expected<ExecutorAddr> lookup(std::string_view name) {
+    return JIT->lookup(name);
   }
 
 private:
-  std::string mangle(const std::string &Name) {
-    std::string MangledName;
-    {
-      raw_string_ostream MangledNameStream(MangledName);
-      Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
-    }
-    return MangledName;
-  }
-
-  JITSymbol findMangledSymbol(const std::string &Name) {
-#ifdef LLVM_ON_WIN32
-    // The symbol lookup of ObjectLinkingLayer uses the SymbolRef::SF_Exported
-    // flag to decide whether a symbol will be visible or not, when we call
-    // IRCompileLayer::findSymbolIn with ExportedSymbolsOnly set to true.
-    //
-    // But for Windows COFF objects, this flag is currently never set.
-    // For a potential solution see: https://reviews.llvm.org/rL258665
-    // For now, we allow non-exported symbols on Windows as a workaround.
-    const bool ExportedSymbolsOnly = false;
-#else
-    const bool ExportedSymbolsOnly = true;
-#endif
-
-    // Search modules in reverse order: from last added to first added.
-    // This is the opposite of the usual search order for dlsym, but makes more
-    // sense in a REPL where we want to bind to the newest available definition.
-    for (auto H : make_range(ModuleHandles.rbegin(), ModuleHandles.rend())) {
-      if (auto Sym = CompileLayer.findSymbolIn(H, Name, ExportedSymbolsOnly)) {
-        return Sym;
-      }
-    }
-
-    // If we can't find the symbol in the JIT, try looking in the host process.
-    if (auto SymAddr = RTDyldMemoryManager::getSymbolAddressInProcess(Name))
-      return JITSymbol(SymAddr, JITSymbolFlags::Exported);
-
-#ifdef LLVM_ON_WIN32
-    // For Windows retry without "_" at beginning, as RTDyldMemoryManager uses
-    // GetProcAddress and standard libraries like msvcrt.dll use names
-    // with and without "_" (for example "_itoa" but "sin").
-    if (Name.length() > 2 && Name[0] == '_')
-      if (auto SymAddr =
-              RTDyldMemoryManager::getSymbolAddressInProcess(Name.substr(1)))
-        return JITSymbol(SymAddr, JITSymbolFlags::Exported);
-#endif
-
-    return nullptr;
-  }
-
-  std::unique_ptr<TargetMachine> TM;
-  const DataLayout DL;
-  ObjLayerT ObjectLayer;
-  CompileLayerT CompileLayer;
-  std::vector<ModuleHandleT> ModuleHandles;
+  std::unique_ptr<LLJIT> JIT;
 };
 
 } // end namespace orc
