@@ -45,10 +45,8 @@ class ASTNode;
 // Miscellaneous helper functions
 // -------------------------------------------------
 
-std::unique_ptr<ASTNode> LogError(const char *Str) {
-  fprintf(stderr, "Error: %s\n", Str);
-  return nullptr;
-}
+// Log an error message to standard error.
+void LogError(std::string_view S) { llvm::errs() << S; }
 
 bool is_int(std::string_view str) {
   // Check with regex (does not accept leading zeroes before first digit)
@@ -211,6 +209,8 @@ public:
 // ---------------------------------------------------------------------------
 // Some global variables used in parsing, type-checking, and code generation.
 // ---------------------------------------------------------------------------
+
+// NOTE: These tables will be helpful for "codegen" methods.
 static std::map<ASTNode *, MiniAPLArrayType> TypeTable;
 static std::map<std::string, Value *> ValueTable;
 static std::unique_ptr<LLVMContext> TheContext =
@@ -223,10 +223,13 @@ static std::map<std::string, Value *> NamedValues;
 // ---------------------------------------------------------------------------
 // LLVM codegen helpers
 // ---------------------------------------------------------------------------
+
+// Returns an integer type with the given width.
 IntegerType *intTy(const int width) {
-  return IntegerType::get(*TheContext, 32);
+  return IntegerType::get(*TheContext, width);
 }
 
+// Returns a constant integer with the given width and value.
 ConstantInt *intConst(const int width, const int i) {
   ConstantInt *const_int32 = ConstantInt::get(
       *TheContext, APInt(width, StringRef(std::to_string(i)), 10));
@@ -234,7 +237,7 @@ ConstantInt *intConst(const int width, const int i) {
 }
 
 // Helper function to get or initialize the C++ `printf` function.
-static Function *GetOrCreatePrintf(Module *M) {
+static Function *__GetOrCreatePrintf(Module *M) {
   Function *func_printf;
   if (func_printf = M->getFunction("printf"); func_printf)
     return func_printf;
@@ -251,10 +254,10 @@ static Function *GetOrCreatePrintf(Module *M) {
 }
 
 // NOTE: This utility function generates LLVM IR to print out the std::string
-// "to_print", e.g., CreatePrintfStr(M, BB, "XXX") will print "XXX" when
+// `to_print`, e.g., CreatePrintfStr(M, BB, "XXX") will print "XXX" when
 // executed.
 void CreatePrintfStr(Module *mod, BasicBlock *bb, std::string_view to_print) {
-  Function *func_printf = GetOrCreatePrintf(mod);
+  Function *func_printf = __GetOrCreatePrintf(mod);
 
   IRBuilder<> builder(*TheContext);
   builder.SetInsertPoint(bb);
@@ -270,7 +273,7 @@ void CreatePrintfStr(Module *mod, BasicBlock *bb, std::string_view to_print) {
 // value "val" when executed.
 void CreatePrintfInt(Module *mod, BasicBlock *bb, Value *val) {
   assert(val && "invalid integer");
-  Function *func_printf = GetOrCreatePrintf(mod);
+  Function *func_printf = __GetOrCreatePrintf(mod);
 
   IRBuilder<> builder(*TheContext);
   builder.SetInsertPoint(bb);
@@ -281,11 +284,6 @@ void CreatePrintfInt(Module *mod, BasicBlock *bb, Value *val) {
   int32_call_params.push_back(val);
 
   CallInst::Create(func_printf, int32_call_params, "call", bb);
-}
-
-Value *LogErrorV(const char *Str) {
-  LogError(Str);
-  return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -365,15 +363,19 @@ std::ostream &operator<<(std::ostream &out, ParseState &PS) {
   return out;
 }
 
-#define EAT(PS, t)                                                             \
-  if (PS.eat() != (t)) {                                                       \
-    return LogError("EAT ERROR");                                              \
-  }
+// If the next token is not `t`, log an error and return false.
+// Otherwise return true.
+bool EatOrError(ParseState &PS, std::string_view t) {
+  if (PS.eat() == (t))
+    return true;
+  LogError("parsing error, expected: " + std::string(t));
+  return false;
+}
 
 std::unique_ptr<ASTNode> ParseExpr(ParseState &PS) {
   std::string Name = PS.eat();
   if (is_int(Name)) {
-    return std::unique_ptr<ASTNode>(new NumberASTNode(stoi(Name)));
+    return std::unique_ptr<ASTNode>(new NumberASTNode(std::stoi(Name)));
   }
 
   bool isFunctionCall = PS.peek() == "(";
@@ -386,10 +388,12 @@ std::unique_ptr<ASTNode> ParseExpr(ParseState &PS) {
   while (PS.peek() != ")") {
     Args.push_back(ParseExpr(PS));
     if (PS.peek() != ")") {
-      EAT(PS, ",");
+      if (!EatOrError(PS, ","))
+        return nullptr;
     }
   }
-  EAT(PS, ")");
+  if (!EatOrError(PS, ")"))
+    return nullptr;
 
   return std::unique_ptr<ASTNode>(new CallASTNode(Name, std::move(Args)));
 }
