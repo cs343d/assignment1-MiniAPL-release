@@ -1,1 +1,2 @@
 reduce(mkArray(2, 2, 2, 5, 9, 3, 4));
+reduce(reduce(mkArray(2, 2, 2, 5, 9, 3, 4)));
