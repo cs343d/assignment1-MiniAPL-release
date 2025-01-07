@@ -66,7 +66,7 @@ ends with a semicolon and is either an assignment, `A = add(B, C);`, or an evalu
                   | <Name>
                   | <Integer>
 
-For example the following MiniAPL program builds a 1 dimensional, 4 entry array consisting of the numbers 1, 2, 3, and 4. and then addss this array to itself and prints the result to the terminal:
+For example the following MiniAPL program builds a 1 dimensional, 4 entry array consisting of the numbers 1, 2, 3, and 4. and then adds this array to itself and prints the result to the terminal:
 
     assign A = mkArray(1, 4, 1, 2, 3, 4);
     assign a = add(A, A);
