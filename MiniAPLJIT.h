@@ -13,17 +13,19 @@
 namespace llvm {
 namespace orc {
 
+// Houses the components for the Mini APL JIT. (This is really just a wrapper
+// for the LLJIT, which was initially a lot more complex to set up.) We refer
+// curious readers to the OrcV2 documentation: https://llvm.org/docs/ORCv2.html
 class MiniAPLJIT {
 public:
   MiniAPLJIT(std::unique_ptr<LLJIT> J) : JIT(std::move(J)) {}
 
   // Creates a mini-APL JIT from the LLJIT builder.
   static Expected<MiniAPLJIT> Create() {
-    // Initialize LLVM's native target and asm printer.
+    // Initialize LLVM's native target and ASM printer.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    // Create LLJIT instance.
     llvm::Expected<std::unique_ptr<LLJIT>> J = LLJITBuilder().create();
     if (!J) {
       return J.takeError();
@@ -35,11 +37,12 @@ public:
   // Returns the LLVM target triple, i.e., <arch>-<vendor>-<sys>-<abi>
   llvm::Triple getTargetTriple() { return JIT->getTargetTriple(); }
 
+  // Adds this thread safe-module to the JIT. Returns error upon failure.
   Error addIRModule(ThreadSafeModule TSM) {
     return JIT->addIRModule(std::move(TSM));
   }
 
-  // Find a symbol in the JIT.
+  // Find a symbol in the JIT. If none is found, return error.
   Expected<ExecutorAddr> lookup(std::string_view name) {
     return JIT->lookup(name);
   }
