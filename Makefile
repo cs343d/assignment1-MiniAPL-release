@@ -5,26 +5,35 @@ SRC_DIR := src
 BIN_DIR := bin
 BUILD_DIR := build
 
-CXXFLAGS := -std=c++11 -I ./src
+CXXFLAGS := -std=c++17 -I ./src
 
-mini-apl-tests: mini-apl
-	$(BIN_DIR)/$^ ./miniapl_programs/test_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/test_file_output.txt; then echo "Success!"; else echo "test diff mismatch"; fi;
-	$(BIN_DIR)/$^ ./miniapl_programs/add_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/add_file_output.txt; then echo "Success!"; else echo "add diff mismatch"; fi;
-	$(BIN_DIR)/$^ ./miniapl_programs/reduce_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/reduce_file_output.txt; then echo "Success!"; else echo "reduce diff mismatch"; fi;
-	$(BIN_DIR)/$^ ./miniapl_programs/exp_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/exp_file_output.txt; then echo "Success!"; else echo "exp diff mismatch"; fi;
-	$(BIN_DIR)/$^ ./miniapl_programs/sub_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/sub_file_output.txt; then echo "Success!"; else echo "sub diff mismatch"; fi;
-	$(BIN_DIR)/$^ ./miniapl_programs/neg_file.mapl > temp.txt
-	@if diff -q temp.txt ./expected_results/neg_file_output.txt; then echo "Success!"; else echo "neg diff mismatch"; fi;
-	@rm temp.txt
+mini-apl-tests: mini-apl-build
+	$(BIN_DIR)/$^ ./miniapl_programs/test.mapl > yours.txt
+	@if diff yours.txt ./expected_results/test.txt; then echo "Success!"; else echo "Error: test diff mismatch"; fi; echo "\n"
+	$(BIN_DIR)/$^ ./miniapl_programs/add.mapl > yours.txt
+	@if diff yours.txt ./expected_results/add.txt; then echo "Success!"; else echo "Error: add diff mismatch"; fi; echo "\n"
+	$(BIN_DIR)/$^ ./miniapl_programs/reduce.mapl > yours.txt
+	@if diff yours.txt ./expected_results/reduce.txt; then echo "Success!"; else echo "Error: reduce diff mismatch"; fi; echo "\n"
+	$(BIN_DIR)/$^ ./miniapl_programs/exp.mapl > yours.txt
+	@if diff yours.txt ./expected_results/exp.txt; then echo "Success!"; else echo "Error: exp diff mismatch"; fi; echo "\n"
+	$(BIN_DIR)/$^ ./miniapl_programs/sub.mapl > yours.txt
+	@if diff yours.txt ./expected_results/sub.txt; then echo "Success!"; else echo "Error: sub diff mismatch"; fi; echo "\n"
+	$(BIN_DIR)/$^ ./miniapl_programs/neg.mapl > yours.txt
+	@if diff yours.txt ./expected_results/neg.txt; then echo "Success!"; else echo "Error: neg diff mismatch"; fi; echo "\n"
+	@rm yours.txt
 
-mini-apl:
+mini-apl-build:
 	@mkdir -p $(BIN_DIR)
-	$(CXX) -g -O0 compiler.cpp `$(LLVM_CONFIG) --cxxflags --ldflags --system-libs --libs all` -o $(BIN_DIR)/mini-apl
+	$(CXX) -g -O0 compiler.cpp `$(LLVM_CONFIG) --cxxflags --ldflags --system-libs --libs all` -o $(BIN_DIR)/mini-apl-build
+
+mini-apl-debug-build:
+	@mkdir -p $(BIN_DIR)
+	$(CXX) -g -O0 compiler.cpp `$(LLVM_CONFIG) --cxxflags --ldflags --system-libs --libs all` -fsanitize=address -o $(BIN_DIR)/mini-apl-debug-build
+
+# Example: 
+#   make mini-apl-debug program=sub
+mini-apl-debug: mini-apl-debug-build
+	$(BIN_DIR)/$^ ./miniapl_programs/$(program).mapl -d
 
 clean:
 	\rm -rf $(BUILD_DIR) $(BIN_DIR)

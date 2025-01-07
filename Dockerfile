@@ -1,6 +1,6 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
-ARG LLVM_VERSION=6.0
+ARG LLVM_VERSION= 19.1.6
 
 RUN apt-get update && \
     apt-get install -y \
