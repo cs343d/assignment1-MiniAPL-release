@@ -4,7 +4,7 @@ In this assignment you will implement a tiny language for dense matrix operation
 
 ## Getting LLVM
 
-This project has been tested and developed with LLVM 19.1.6 (released in December 2024). The latest versions of LLVM (> 15.0.0) will likely work, but this has not been tested.
+This project has been tested and developed with LLVM 18.0.0 and LLVM 19.1.6 (released in December 2024). The latest versions of LLVM (> 15.0.0) will likely work, but this has not been tested.
 
 ### Extra LLVM Info
 
@@ -46,9 +46,7 @@ Then, to start an interactive shell in a docker container with the project direc
 
     make docker-shell
 
-And to run the tests, run:
-
-    make docker-test
+You can then run the `make` commands above.
 
 
 ## Grammar and Types
